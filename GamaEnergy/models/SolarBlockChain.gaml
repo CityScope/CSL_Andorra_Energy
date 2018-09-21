@@ -67,6 +67,16 @@ global{
 	}
 	
 	
+	//Save the agents bug when the cycle is equals to 100
+	reflex save_building_attribute when: cycle = 100{
+		ask building {
+			// save the values of the variables name, speed and size to the csv file //,maxProd,minProd,maxCon,minCon, class_map,energy_price_map,class_color_map,average_surface,max_surface,max_energy
+			save [name,time,area,energyPrice,usage,scale, price,nbFloors,production,consumption] to: "../results/buildings1.csv" type:"csv";
+		}
+		//Pause the model as the data are saved
+		//do pause;
+		do pause;
+	}
 	
 	reflex simulation{
 		string moment <- (mod(time,24)<12? "AM":"PM");
