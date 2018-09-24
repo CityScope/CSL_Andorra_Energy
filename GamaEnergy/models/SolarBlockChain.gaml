@@ -21,8 +21,6 @@ global{
 	file roads_shapefile <- file("./../includes/City/"+cityScopeCity+"/Roads.shp");
 	file table_bound_shapefile <- file("./../includes/City/"+cityScopeCity+"/table_bounds.shp");
 	geometry shape <- envelope(bound_shapefile);
-	kml kml_export;
-	date starting_date <- #now;
 	int maxProd;
 	int minProd;
 	int maxCon;
@@ -75,18 +73,7 @@ global{
 			save [name,time,area,energyPrice,usage,scale, price,nbFloors,production,consumption] to: "../results/buildings.csv" type:"csv" rewrite: false;
 		}
 	}
-	
-	reflex add_objects_to_kml when: cycle = 10{	
-		ask building {
-			//add a geometry to the kml : add_geometry(kml, geometry, line width, border color, color)
-			kml_export <- kml_export add_geometry (shape,2.0,class_color_map[usage+scale],class_color_map[usage+scale]);			
-			//it is also possible to specify the begin date (current_date by default) and the ending date (current_date + step by default)
-			//kml_export <- kml_export add_geometry (shape,2.0,#black,color, #now, #now plus_hours 1);		
-		}
-		save kml_export to:"../results/result.kmz" type:"kmz";
-	}
-	
-	
+		
 	reflex simulation{
 		string moment <- (mod(time,24)<12? "AM":"PM");
 		write "Day "+int(time/24+1)+': '+ (1+mod(time-1,12)) +":00 "+moment;
