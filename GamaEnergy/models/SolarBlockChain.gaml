@@ -14,12 +14,12 @@ global{
 	float buying_scale_factor <- 40000.0;
 	float selling_scale_factor <- 25000.0;
 	
-	string cityScopeCity <-"Andorra";
+	string cityScopeCity <-"Taipei";
 	// GIS FILE //	
 	file bound_shapefile <- file("./../includes/City/"+cityScopeCity+"/Bounds.shp");
 	file buildings_shapefile <- file("./../includes/City/"+cityScopeCity+"/Buildings.shp");
 	file roads_shapefile <- file("./../includes/City/"+cityScopeCity+"/Roads.shp");
-	file table_bound_shapefile <- file("./../includes/City/"+cityScopeCity+"/table_bounds.shp");
+	//file table_bound_shapefile <- file("./../includes/City/"+cityScopeCity+"/table_bounds.shp");
 	geometry shape <- envelope(bound_shapefile);
 	int maxProd;
 	int minProd;
@@ -42,7 +42,7 @@ global{
 	
 	init{
 		
-		create table from: table_bound_shapefile; 
+		//create table from: table_bound_shapefile; 
 		create building from: buildings_shapefile with: 
 		[usage::string(read ("Usage")),scale::string(read ("Scale")),category::string(read ("Category")), nbFloors::1+float(read ("Floors"))]{
 
