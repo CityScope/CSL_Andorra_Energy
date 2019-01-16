@@ -14,7 +14,7 @@ global{
 	float buying_scale_factor <- 40000.0;
 	float selling_scale_factor <- 25000.0;
 	
-	string cityScopeCity <-"Andorra" among: ["Taipei", "Shanghai", "Lyon_PlaceBellecour", "Andorra"];
+	string cityScopeCity <-"Andorra" among: ["Taipei", "Shanghai", "Lyon_PlaceBellecour", "Andorra", "Hamburg", "Lima", "Rabat","Marrakech"];
 	// GIS FILE //	
 	file buildings_shapefile <- file("./../includes/City/"+cityScopeCity+"/Buildings.shp");
 	file roads_shapefile <- file("./../includes/City/"+cityScopeCity+"/Roads.shp");
