@@ -86,6 +86,8 @@ global{
 			}
 		}
 		
+		write "There are "+length(people)+" people in "+cityScopeCity+" and "+length(parking)+" parking places.";
+		
 
 		
 	}
