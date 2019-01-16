@@ -14,7 +14,7 @@ global{
 	float buying_scale_factor <- 40000.0;
 	float selling_scale_factor <- 25000.0;
 	
-	string cityScopeCity <-"Andorra" among: ["Taipei", "Shanghai", "Lyon_PlaceBellecour", "Andorra"];
+	string cityScopeCity <-"Andorra" among: ["Taipei", "Shanghai", "Lyon_PlaceBellecour", "Andorra", "Hamburg", "Lima", "Rabat"];
 	// GIS FILE //	
 	file buildings_shapefile <- file("./../includes/City/"+cityScopeCity+"/Buildings.shp");
 	file roads_shapefile <- file("./../includes/City/"+cityScopeCity+"/Roads.shp");
@@ -36,12 +36,15 @@ global{
 	matrix production_matrix;
 	float max_produce_energy;
 	
-	float step <- 1#hour;
+	float step <- 1#mn;
 	date starting_date <- date([2019,1,1]);
 	
 	float influence_factor <- 0.1;
 	
 	string P_strategy <- "random" among: ["random", "pro", "cons"];
+	bool governmentAction parameter: "government Action" <- true;
+	bool teleTransportation parameter: "teleTransportation" <- false;
+	float interactionDistance parameter: "interaction Distance" min:1.0 max:100.0 <- 20.0;
 	
 	graph road_network;
 	init{
@@ -89,7 +92,7 @@ global{
 		}
 		
 	reflex simulation{
-		if every(1#day) {
+		if (every(1#day) and governmentAction){
 			ask gouvernment {
 				do promote_environment;
 			}
@@ -141,7 +144,7 @@ species gouvernment {
 }
 
 
-species people {
+species people skills:[moving]{
 	building my_home;
 	building working_place;
 	float environmental_value <- rnd(1.0);
@@ -150,25 +153,30 @@ species people {
 	int working_hour <- rnd(7,10);
 	int going_home_hour <- rnd(16,20);
 	bool goto_work <- false;
-	float pro_environment <- rnd(0.5) min:0.0 max: 1.0;
+	float pro_environment <- rnd(0.1) min:0.0 max: 1.0;
 	
+	reflex wander when:!teleTransportation{
+		do wander on:road_network;
+	}
 	
-	reflex go_to_work when:not goto_work and (current_date.hour = working_hour) {
+	reflex go_to_work when:not goto_work and (current_date.hour = working_hour) and teleTransportation{
 		goto_work <- true;
 		location <- any_location_in(working_place);
 	}	
 	
 	
-	reflex go_to_home when: goto_work and (current_date.hour = going_home_hour) {
+	reflex go_to_home when: goto_work and (current_date.hour = going_home_hour) and teleTransportation{
 		goto_work <- false;
 		location <- any_location_in(my_home);
 	}
 	
 	
-	
 	reflex influence_by_other when: flip(0.1) {
-		list<people> neighbors <- people at_distance 20.0;
-		pro_environment <- pro_environment + (influence_factor * ((neighbors mean_of each.pro_environment) - pro_environment));
+		list<people> neighbors <- people at_distance interactionDistance;
+		if(length(neighbors)>0){
+			pro_environment <- pro_environment + (influence_factor * ((neighbors mean_of each.pro_environment) - pro_environment));
+		}
+		
 	}
 	
 	aspect default {
@@ -236,28 +244,35 @@ species road {
 }
 
 experiment start type: gui {
-	output {
-		
+	output{
 		display view1  type:opengl  {	
 			species building aspect:is_producer;	
 			species road;
 			species people;
 		}
-		display chartprod 
+		display chartprod
 		{
-			chart 'prod' axes:rgb(125,125,125) size:{1.0,0.5} type:histogram style:stack //white
+			chart 'prod' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack //white
 			{
 				data 'production' value:sum(building collect each.production) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
 				data 'consumption' value:-sum(building collect each.consumption)  accumulate_values:true color:rgb(71,168,243) marker:false thickness:2.0; //blue
 			}
 			
-			chart 'building producing' axes:rgb(125,125,125) size:{1.0,0.5} position:{0.0,0.5}
+			chart 'building producing' axes:rgb(125,125,125) size:{0.5,0.5} position:{0.0,0.5}
 			{
 				data 'nb building producing' value:building count (each.produce_electricty) color: #green marker:false thickness:2.0;  //red
 				data 'nb building not producing' value:building count not(each.produce_electricty) color: #red marker:false thickness:2.0;  //red
 		
 			}
 			
+			chart 'people opinion' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack position:{0.5,0.0}//white
+			{
+				data 'pro environment > 0.5' value:length(people where (each.pro_environment>0.5)) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
+			}
+			chart 'green building' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack position:{0.5,0.5}//white
+			{
+				data 'green building ' value:length(building where (each.produce_electricty=true)) accumulate_values:true color:#green marker:false thickness:2.0; //red
+			}	
 		}
 	}
 }
@@ -275,8 +290,7 @@ experiment multi_sim_strategy type: gui {
 			species building aspect:is_producer;	
 			species road;
 			species people;
-		}
-		
+		}	
 	}
 }
 
@@ -284,6 +298,8 @@ experiment multi_sim_city type: gui {
 	init {
 	
 		create simulation with: [cityScopeCity::"Lyon_PlaceBellecour"];
+		//create simulation with: [cityScopeCity::"Hamburg"];
+		create simulation with: [cityScopeCity::"Rabat"];
 		create simulation with: [cityScopeCity::"Taipei"];
 		create simulation with: [cityScopeCity::"Shanghai"];
 		
