@@ -154,6 +154,7 @@ species people skills:[moving]{
 	int going_home_hour <- rnd(16,20);
 	bool goto_work <- false;
 	float pro_environment <- rnd(0.1) min:0.0 max: 1.0;
+
 	
 	reflex wander when:!teleTransportation{
 		do wander on:road_network;
