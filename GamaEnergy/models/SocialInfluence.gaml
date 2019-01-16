@@ -150,7 +150,7 @@ species people {
 	int working_hour <- rnd(7,10);
 	int going_home_hour <- rnd(16,20);
 	bool goto_work <- false;
-	float pro_environment <- rnd(0.5) min:0.0 max: 1.0;
+	float pro_environment <- 1.1+rnd(0.5);// min:0.0 max: 1.0;
 	
 	
 	reflex go_to_work when:not goto_work and (current_date.hour = working_hour) {
