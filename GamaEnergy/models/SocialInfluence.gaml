@@ -42,9 +42,12 @@ global{
 	float influence_factor <- 0.1;
 	
 	string P_strategy <- "random" among: ["random", "pro", "cons"];
-	bool governmentAction parameter: "government Action" <- true;
+	bool governmentAction parameter: "government Action" <- false;
 	bool teleTransportation parameter: "teleTransportation" <- false;
 	float interactionDistance parameter: "interaction Distance" min:1.0 max:100.0 <- 20.0;
+	
+	list<float> histo;
+	int histo_cat_number <- 10;
 	
 	graph road_network;
 	init{
@@ -109,11 +112,21 @@ global{
 		if (every(1#day)){
 		 	ask building {
 		 		do choose_produce_electricty;	
-		 	}
-			
+		 	}	
 		}
 		
 		
+	}
+	
+	reflex compute_histogram{
+		histo <- list_with(histo_cat_number,0.0);
+		loop tmp over: people{
+			int cat <- min([int(histo_cat_number*tmp.pro_environment), histo_cat_number-1]);
+			histo[cat] <- histo[cat]+1; 
+		}
+		loop i from:0 to: histo_cat_number-1{
+			histo[i] <- histo[i]/length(people);
+		}
 	}	
 }
 
@@ -153,7 +166,7 @@ species people skills:[moving]{
 	int working_hour <- rnd(7,10);
 	int going_home_hour <- rnd(16,20);
 	bool goto_work <- false;
-	float pro_environment <- rnd(0.1) min:0.0 max: 1.0;
+	float pro_environment <- rnd(1.0) min:0.0 max: 1.0;
 
 	
 	reflex wander when:!teleTransportation{
@@ -273,7 +286,15 @@ experiment start type: gui {
 			chart 'green building' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack position:{0.5,0.5}//white
 			{
 				data 'green building ' value:length(building where (each.produce_electricty=true)) accumulate_values:true color:#green marker:false thickness:2.0; //red
-			}	
+			}
+			
+		}
+		display histogram
+		{
+			chart 'opinion distribution' axes:rgb(125,125,125) size:{0.5,0.5} y_range: [0,1.0] type:histogram style:stack //white
+			{
+				data 'pro environment > 0.5' value: histo  color:rgb(169,25,37)   marker:false thickness:2.0; //red
+			}
 		}
 	}
 }
