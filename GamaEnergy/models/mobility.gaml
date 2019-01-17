@@ -36,12 +36,10 @@ global{
 	float PARKING_SPACING <- 5.0#m;
 	float PARKING_WIDTH <- 2.0#m;
 	float nb_change_per_hour <- 0.5;
-	float change_probability;
+	float change_probability <- step/1#hour*nb_change_per_hour;
 	
 	
 	init{
-		change_probability <- step/1#hour*nb_change_per_hour;
-		
 		create road from: roads_shapefile{
 			int segments_number <- length(shape.points)-1;
 			loop i from: 0 to: segments_number-1{
@@ -149,7 +147,7 @@ species people skills:[moving]{
 	//bool has_car <- false;
 	parking parking_location <- nil;
 	float speed <- 3#km/#hour;
-	bool change_mode <- false;
+//	bool change_mode <- false;
 	bool use_car <- false;
 	bool parking_car <- false;
 	
