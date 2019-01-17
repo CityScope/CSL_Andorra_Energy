@@ -46,10 +46,11 @@ global{
 	float influence_factor <- 0.1;
 	
 	string P_strategy <- "random" among: ["random", "pro", "cons"];
-	bool governmentAction parameter: "government Action" <- false;
+	bool governmentAction parameter: "Government Action" <- false;
 	bool teleTransportation parameter: "teleTransportation" <- false;
-	float interactionDistance parameter: "interaction Distance" min:1.0 max:100.0 <- 20.0;
-	float transparency parameter: "Visualization" min:0.0 max:1.0 <- 0.5;
+	float interactionDistance parameter: "Interaction Distance" min:1.0 max:100.0 <- 20.0;
+	float transparency parameter: "Transparency" min:0.0 max:1.0 <- 0.5;
+	bool bw parameter: "Black and White" <- false;
 	
 	list<float> histo;
 	int histo_cat_number <- 10;
@@ -371,7 +372,7 @@ species building {
 	
 	
 	aspect is_producer {
-		draw shape color:(produce_electricty ? #green : #red);
+		draw shape color: (bw ? #black : (produce_electricty ? #green : #red));
 	}
 	
 	
