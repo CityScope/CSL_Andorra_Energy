@@ -470,7 +470,7 @@ experiment multi_sim_strategy type: gui {
 			species building aspect:is_producer;	
 			species road;
 			species people;
-			grid cell lines: #white ;
+			grid cell transparency: transparency;// lines: #white 
 		}	
 	}
 }
@@ -478,11 +478,11 @@ experiment multi_sim_strategy type: gui {
 experiment multi_sim_city type: gui {
 	init {
 	
-		create simulation with: [cityScopeCity::"Lyon_PlaceBellecour"];
+		//create simulation with: [cityScopeCity::"Lyon_PlaceBellecour"];
 		//create simulation with: [cityScopeCity::"Hamburg"];
-		create simulation with: [cityScopeCity::"Rabat"];
+	//	create simulation with: [cityScopeCity::"Rabat"];
 		create simulation with: [cityScopeCity::"Taipei"];
-		create simulation with: [cityScopeCity::"Shanghai"];
+	//	create simulation with: [cityScopeCity::"Shanghai"];
 		
 	}
 	output {
@@ -492,6 +492,7 @@ experiment multi_sim_city type: gui {
 			species building aspect:is_producer;	
 			species road;
 			species people;
+			grid cell transparency: transparency;// lines: #white 
 		}
 		
 	}
