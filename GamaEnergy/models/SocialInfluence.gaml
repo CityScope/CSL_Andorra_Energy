@@ -257,6 +257,11 @@ species road {
 	}
 }
 
+
+grid sir_grid width: 50 height: 50 {
+	rgb color <- rgb('black');   
+}
+
 experiment start type: gui {
 	output{
 		display view1  type:opengl  {	

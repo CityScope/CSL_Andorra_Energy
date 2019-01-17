@@ -26,8 +26,7 @@ global{
 	map<string,int> class_map<- ["OL"::2, "OM"::3,  "OS"::3,  "RL"::4, "RM"::5,  "RS"::6, "PL"::7, "PM"::8,  "PS"::9];
 	map<string,rgb> class_color_map<- ["OL"::rgb(12,30,51), "OM"::rgb(31,76,128),  "OS"::rgb(53,131,219),  "RL"::rgb(143,71,12), "RM"::rgb(219,146,25),  "RS"::rgb(219,198,53), "PL"::rgb(110,46,100), "PM"::rgb(127,53,116),  "PS"::rgb(179,75,163), "Park"::rgb(142,183,31)];
 		
-	
-	float step <- 1#hour;
+	float step <- 1#mn;
 	date starting_date <- date([2019,1,1]);
 		
 	
@@ -36,10 +35,12 @@ global{
 	//parking parameters
 	float PARKING_SPACING <- 5.0#m;
 	float PARKING_WIDTH <- 2.0#m;
-
+	float nb_change_per_hour <- 0.5;
+	float change_probability;
 	
 	
 	init{
+		change_probability <- step/1#hour*nb_change_per_hour;
 		
 		create road from: roads_shapefile{
 			int segments_number <- length(shape.points)-1;
@@ -65,12 +66,14 @@ global{
 						angle <- pk_angle;
 						capacity <- 1;
 						occupancy <- rnd(1);
-					}				
+						add self to: myself.parking_list;
+					}	
 				}
 				
 			}
 		}
 		
+		create pev number: 150;
 		
 		road_network <- as_edge_graph(road);
 		create building from: buildings_shapefile with: 
@@ -83,6 +86,11 @@ global{
 				working_place <- one_of(building where (each.category = "O"));
 				location <- any_location_in(my_home);
 				myself.inhabitants << self;
+//				if flip(0.8){
+//					has_car <- true;
+//					parking_location <- parking where(each.occupancy < each.capacity) closest_to(self);
+//					parking_location.occupancy <- parking_location.occupancy+1;
+//				}
 			}
 		}
 		
@@ -114,10 +122,20 @@ global{
 	}	
 }
 
+species pev skills:[moving]{
+	
+	reflex wander {
+		do wander on: road_network speed: speed;	
+	}
+
+	aspect default {
+		draw triangle(3.0) color: #green; 
+	}
+
+}
 
 
-
-species people {
+species people skills:[moving]{
 	building my_home;
 	building working_place;
 	float environmental_value <- rnd(1.0);
@@ -125,25 +143,105 @@ species people {
 	bool electric_car <- false;
 	int working_hour <- rnd(7,10);
 	int going_home_hour <- rnd(16,20);
-	bool goto_work <- false;
+//	bool commuting <- false;
 	float pro_environment <- rnd(0.5) min:0.0 max: 1.0;
+	//point target;
+	//bool has_car <- false;
+	parking parking_location <- nil;
+	float speed <- 3#km/#hour;
+	bool change_mode <- false;
+	bool use_car <- false;
+	bool parking_car <- false;
 	
-	
-	reflex go_to_work when:not goto_work and (current_date.hour = working_hour) {
-		goto_work <- true;
-		location <- any_location_in(working_place);
-	}	
-	
-	
-	reflex go_to_home when: goto_work and (current_date.hour = going_home_hour) {
-		goto_work <- false;
-		location <- any_location_in(my_home);
+	reflex wander when: not parking_car{
+		do wander on: road_network speed: speed;	
 	}
+	
+	reflex changing_mode when: flip(change_probability) {
+		if use_car{
+			parking_location <- (road(current_edge).parking_list where (each.occupancy < each.capacity)) closest_to self;
+			if parking_location != nil{
+				parking_location.occupancy <- parking_location.occupancy + 1;
+				use_car <- false;
+				speed <- 3#km/#hour;
+			}
+		}else{
+			parking_location <- (road(current_edge).parking_list where (each.occupancy >= 1)) closest_to self;
+			if parking_location != nil and parking_location distance_to self < 10#m{
+				parking_location.occupancy <- parking_location.occupancy - 1;
+				use_car <- true;
+				speed <- 45#km/#hour;	
+			}
+		}
+	}
+	
+	
+	
+//	reflex park_car when: parking_car{
+//		do goto target: parking_location on: current_edge speed: 5#km/#hour;
+//		if self distance_to parking_location < 1#m {
+//			change_mode <- false;
+//			parking_car <- false;
+//			parking_location.occupancy <- parking_location.occupancy + 1;
+//			use_car <- false;
+//			speed <- 3#km/#hour;
+//		}
+//		
+//	}
+//	
+//	reflex changing_mode when: change_mode and not parking_car{
+//		if use_car{
+//			parking_location <- (road(current_edge).parking_list where (each.occupancy < each.capacity)) closest_to self;
+//			if parking_location != nil{//} and parking_location distance_to self < 10#m{
+//				parking_car <- true;
+//			}
+//		}else{
+//			parking_location <- (road(current_edge).parking_list where (each.occupancy >= 1)) closest_to self;
+//			if parking_location != nil and parking_location distance_to self < 10#m{
+//				change_mode <- false;
+//				parking_location.occupancy <- parking_location.occupancy - 1;
+//				use_car <- true;
+//				speed <- 45#km/#hour;	
+//			}
+//		}
+//	}
+//	
+//	reflex update_mode when: not change_mode and flip(change_probability){
+//		change_mode <- true;
+//		if use_car{
+//			speed <- 20#km/#hour;
+//		}
+//	}
+		
+//	reflex move when: commuting{
+//	do wander on: road_network;
+//		if self distance_to target < 2#m{
+//			commuting <- false;
+//		}else{
+//			do goto target: target on: road_network recompute_path: false;	
+//		}
+
+//	}
+	
+//	reflex go_to_work when:not commuting and (current_date.hour = working_hour) {
+//		target <- any_location_in(working_place);
+//		commuting <- true;
+//	}	
+//	
+//	
+//	reflex go_home when: not commuting and (current_date.hour = going_home_hour) {
+//		target <- any_location_in(my_home);
+//		commuting <- true;
+//	}
 	
 	
 	aspect default {
 		float val <- 255 * pro_environment;
-		draw circle(5.0) color: rgb(255 - val, val,0.0) border: #black;
+		if use_car{
+			draw square(3.0) color: parking_car?#green:#red; //rgb(255 - val, val,0.0); 
+		}else{
+			draw circle(3.0) color: #blue; //rgb(255 - val, val,0.0);
+		}
 	}
 }
 
@@ -206,9 +304,10 @@ experiment start type: gui {
 		
 		display view1  type:opengl  {
 			species building aspect:base;	
+			species parking;
 			species road;
 			species people;
-			species parking;
+			species pev;
 		}
 	//	display chartprod 
 	//	{
