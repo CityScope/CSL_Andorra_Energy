@@ -1,7 +1,10 @@
 /**
 * Name: SolarBlockChain
-* Author: Patrick Taillandier, Luis Alonso,  Tri Nguyen Huu and Arnaud Grignard
-* Description: 
+* Author: Arnaud Grignard, Tri Nguyen , Patrick Taillandier, Luis Alonso  
+* Description: Started in Andorra in the 2019 Workshop. 
+* From the SolarBlockChain model a reinforcement learning strategy has been explored introducing people and governement species
+* Patrick and Pev have also been introduced 
+*
 * Tags: Tag1, Tag2, TagN
 */
 
@@ -38,18 +41,18 @@ global{
 	matrix production_matrix;
 	float max_produce_energy;
 	
-	
-	
 	float step <- 1#mn;
 	date starting_date <- date([2019,1,1]);
 	
 	float influence_factor <- 0.1;
 	
-	string P_strategy <- "random" among: ["random", "pro", "cons"];
-	bool governmentAction parameter: "government Action" <- false;
-	bool teleTransportation parameter: "teleTransportation" <- false;
+	bool governmentAction parameter: "Government Action" category: "Government" <- false;
+    string P_strategy parameter:"Intervention type" category: "Government" <- "random"  among: ["random", "pro", "cons"];
+	int intervention_frequency parameter: "Intervention frequeny" category: "Government" min:1 max:100 <- 50;
+	int nbPromotion parameter: "Number of people prmoted" category: "Government" min:1 max:1000 <- 100;
+	bool teleTransportation  <- false;
 	float interactionDistance parameter: "interaction Distance" min:1.0 max:100.0 <- 20.0;
-	float transparency parameter: "Visualization" min:0.0 max:1.0 <- 0.5;
+	bool heatmap parameter: "Show HeatMap" category:"Visualization"  <- false;
 	
 	list<float> histo;
 	int histo_cat_number <- 10;
@@ -61,8 +64,6 @@ global{
 	float PARKING_WIDTH <- 2.0#m;
 	float nb_change_per_hour <- 0.5;
 	float change_probability <- step/1#hour*nb_change_per_hour;
-	
-	
 	
 	
 	init{
@@ -140,8 +141,7 @@ global{
 			}
 		}
 		
-	reflex reinit_pollution{
-//		write "max pollution "+max(cell collect each.level);
+	reflex reinit_pollution when:heatmap{
 		ask cell {
 			level <- 0.0;
 		}
@@ -149,7 +149,7 @@ global{
 
 		
 	reflex simulation{
-		if (every(1#day) and governmentAction){
+		if (governmentAction and cycle mod intervention_frequency = 0){
 			ask gouvernment {
 				do promote_environment;
 			}
@@ -163,7 +163,7 @@ global{
 			}
 		}
 		
-		if (every(1#day)){
+		if (every(1#hour)){
 		 	ask building {
 		 		do choose_produce_electricty;	
 		 	}	
@@ -190,24 +190,22 @@ species gouvernment {
 	action promote_environment {
 		switch strategy {
 			match "random" {
-				ask 100 among people {
+				ask nbPromotion among people {
 					pro_environment <- pro_environment + rnd(1.0); 
 				}	
 			}
 			match "pro" {
-				ask 100 first (people sort_by - each.pro_environment) {
-					pro_environment <- pro_environment + rnd(1.0); 
+				ask nbPromotion first (people sort_by - each.pro_environment) {
+					pro_environment <- pro_environment + 0.25; 
 				}	
 			}
 			match "cons" {
-				ask 100 first (people sort_by each.pro_environment) {
-					pro_environment <- pro_environment + rnd(1.0); 
+				ask nbPromotion first (people sort_by each.pro_environment) {
+					pro_environment <- pro_environment + 0.25; 
 				}	
 			}
-		}
-		
+		}	
 	}
-	
 }
 
 
@@ -222,8 +220,6 @@ species pev skills:[moving]{
 	}
 
 }
-
-
 
 species people skills:[moving]{
 	building my_home;
@@ -291,7 +287,7 @@ species people skills:[moving]{
 	reflex influence_by_other when: flip(0.1) {
 		list<people> neighbors <- people at_distance interactionDistance;
 		if(length(neighbors)>0){
-			pro_environment <- pro_environment + (influence_factor * ((neighbors mean_of each.pro_environment) - pro_environment));
+			pro_environment <- pro_environment + (influence_factor * ((neighbors mean_of each.pro_environment) - pro_environment)) -0.01;
 		}
 		
 	}
@@ -305,11 +301,6 @@ species people skills:[moving]{
 			draw circle(3.0) color: rgb(255 - val, val,0.0);
 		}
 	}
-	
-//	aspect default {
-//		float val <- 255 * pro_environment;
-//		draw circle(5.0) color: rgb(255 - val, val,0.0) border: #black;
-//	}
 }
 
 
@@ -342,8 +333,7 @@ species building {
 	
 	}
 
-	action choose_produce_electricty {
-		
+	action choose_produce_electricty {	
 		produce_electricty <- (inhabitants mean_of (each.pro_environment)) > 0.5;
 	}
 	action calculate_consumption {
@@ -404,11 +394,16 @@ grid cell width: 100 height: 50 {
 	list neighbours of: cell <- (self neighbors_at 1) of_species cell;  
 	rgb color <- rgb(rnd(255),rnd(255),rnd(255));   
 	
-	reflex update_color{
+	reflex update_color when:heatmap{
 		float level2 <-(min([1,max([0,level/25])]))^(0.5);
 		float tmp <- level2*(length(heat_map)-1);
 		color <- rgb(heat_map[int(tmp)]);
-		//color <- rgb(255,255-level*50,255-level*50);
+	}
+	
+	aspect default{
+		if(heatmap){
+		  draw shape color:color;	
+		}
 	}
 }
 
@@ -420,7 +415,7 @@ experiment start type: gui {
 			species road;
 			species people;
 			species pev;
-			grid cell transparency: transparency;// lines: #white 
+			species cell transparency: 0.5;
 		}
 		display chartprod
 		{
@@ -437,22 +432,20 @@ experiment start type: gui {
 		
 			}
 			
-			chart 'people opinion' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack position:{0.5,0.0}//white
+			chart 'people opinion' axes:rgb(125,125,125) size:{0.25,0.25} type:histogram style:stack position:{0.5,0.0}//white
 			{
 				data 'pro environment > 0.5' value:length(people where (each.pro_environment>0.5)) accumulate_values:true color:rgb(169,25,37) marker:false thickness:2.0; //red
+			}
+			
+			chart 'opinion distribution' axes:rgb(125,125,125) size:{0.25,0.25}  position:{0.75,0.0} y_range: [0,1.0] type:histogram style:stack //white
+			{
+				data 'pro environment > 0.5' value: histo  color:rgb(169,25,37)   marker:false thickness:2.0; //red
 			}
 			chart 'green building' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack position:{0.5,0.5}//white
 			{
 				data 'green building ' value:length(building where (each.produce_electricty=true)) accumulate_values:true color:#green marker:false thickness:2.0; //red
 			}
 			
-		}
-		display histogram
-		{
-			chart 'opinion distribution' axes:rgb(125,125,125) size:{0.5,0.5} y_range: [0,1.0] type:histogram style:stack //white
-			{
-				data 'pro environment > 0.5' value: histo  color:rgb(169,25,37)   marker:false thickness:2.0; //red
-			}
 		}
 	}
 }
@@ -470,33 +463,11 @@ experiment multi_sim_strategy type: gui {
 			species building aspect:is_producer;	
 			species road;
 			species people;
-			grid cell transparency: transparency;// lines: #white 
+			species  cell transparency: 0.5;// lines: #white 
 		}	
 	}
 }
 
-experiment multi_sim_city type: gui {
-	init {
-	
-		//create simulation with: [cityScopeCity::"Lyon_PlaceBellecour"];
-		//create simulation with: [cityScopeCity::"Hamburg"];
-	//	create simulation with: [cityScopeCity::"Rabat"];
-		create simulation with: [cityScopeCity::"Taipei"];
-	//	create simulation with: [cityScopeCity::"Shanghai"];
-		
-	}
-	output {
-		
-		
-		display view1  type:opengl  {	
-			species building aspect:is_producer;	
-			species road;
-			species people;
-			grid cell transparency: transparency;// lines: #white 
-		}
-		
-	}
-}
 
 
 

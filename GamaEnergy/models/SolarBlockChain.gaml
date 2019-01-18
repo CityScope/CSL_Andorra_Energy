@@ -1,6 +1,6 @@
 /**
 * Name: SolarBlockChain
-* Author: Luis Alonso,  Tri Nguyen Huu and Arnaud Grignard
+* Author: Luis Alonso,  Tri Nguyen Huu and Arnaud Grignard (Gama Coding Camp 2018)
 * Description: 
 * Tags: Tag1, Tag2, TagN
 */
@@ -14,7 +14,7 @@ global{
 	float buying_scale_factor <- 40000.0;
 	float selling_scale_factor <- 25000.0;
 	
-	string cityScopeCity <-"Taipei";
+	string cityScopeCity <-"Andorra";
 	// GIS FILE //	
 	file bound_shapefile <- file("./../includes/City/"+cityScopeCity+"/Bounds.shp");
 	file buildings_shapefile <- file("./../includes/City/"+cityScopeCity+"/Buildings.shp");
@@ -210,7 +210,7 @@ species road {
 experiment start type: gui {
 	output {
 		
-		display view1  type:opengl  {	
+		display view1  type:opengl  background:#black{	
 			species building aspect:base;	
  			chart 'prod' size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
@@ -219,13 +219,13 @@ experiment start type: gui {
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //green
 			}
 		}
-		display prod  type:opengl  {		
+		display prod  type:opengl  background:#black{		
 			species building aspect:prod;
 		}
-		display cons  type:opengl  {		
+		display cons  type:opengl  background:#black{		
 			species building aspect:con;
 		}
-		display diff  type:opengl  {		
+		display diff  type:opengl  background:#black{		
 			species building aspect:diff;
 		}	
 		display sharing type:opengl{
