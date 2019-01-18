@@ -53,6 +53,8 @@ global{
 	bool teleTransportation  <- false;
 	float interactionDistance parameter: "interaction Distance" min:1.0 max:100.0 <- 20.0;
 	bool heatmap parameter: "Show HeatMap" category:"Visualization"  <- false;
+	bool bw parameter: "Black and White" category:"Visualization" <- false;
+
 	
 	list<float> histo;
 	int histo_cat_number <- 10;
@@ -361,7 +363,7 @@ species building {
 	
 	
 	aspect is_producer {
-		draw shape color:(produce_electricty ? #green : #red);
+		draw shape color: (bw ? #black : (produce_electricty ? #green : #red));
 	}
 	
 	
