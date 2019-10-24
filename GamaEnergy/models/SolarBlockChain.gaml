@@ -209,33 +209,17 @@ species road {
 
 experiment start type: gui {
 	output {
-		
-		display view1  type:opengl  background:#black{	
+		layout #split;
+		display view1  type:opengl  background:#black toolbar:false{	
 			species building aspect:base;	
- 			chart 'prod' size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
+ 			/*chart 'prod' size:{0.5,0.5} position:{world.shape.width*1.1,0} axes:rgb(175,175,175) 
 			{
 				data 'production' value:sum(building collect each.production) color:rgb(218,82,82) marker:false thickness:2.0;
 				data 'consumption' value:sum(building collect each.consumption) color:rgb(76,140,218) marker:false thickness:2.0;
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //green
-			}
+			}*/
 		}
-		display prod  type:opengl  background:#black{		
-			species building aspect:prod;
-		}
-		display cons  type:opengl  background:#black{		
-			species building aspect:con;
-		}
-		display diff  type:opengl  background:#black{		
-			species building aspect:diff;
-		}	
-		display sharing type:opengl{
-			species table aspect:base;
-			species building aspect:status;
-			species building aspect:sales_network transparency: 0.5;
-		}
-		
-		
-		display chartprod type:opengl
+		display chartprod type:java2D background:#black toolbar:false
 		{
 			chart 'prod' axes:rgb(125,125,125) size:{0.5,0.5} type:histogram style:stack //white
 			{
@@ -258,6 +242,23 @@ experiment start type: gui {
 				data 'Differential' value:sum(building collect each.consumption) - sum(building collect each.production) color:rgb(143,176,9) marker:false thickness:2.0; //Green
 			}
 		}
+		display prod  type:opengl  background:#black toolbar:false{		
+			species building aspect:prod;
+		}
+		display cons  type:opengl  background:#black toolbar:false{		
+			species building aspect:con;
+		}
+		display diff  type:opengl  background:#black toolbar:false{		
+			species building aspect:diff;
+		}	
+		display sharing type:opengl background:#black toolbar:false{
+			species table aspect:base;
+			species building aspect:status;
+			species building aspect:sales_network transparency: 0.5;
+		}
+		
+		
+
 	}
 }
 
